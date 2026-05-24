@@ -33,7 +33,7 @@ CREATE TABLE Fact_Sales (
     machine_id VARCHAR(10),
     product_id VARCHAR(10),
     topping_id VARCHAR(10) NULL, -- เก็บไว้เผื่อมีท็อปปิ้งเพิ่มเติม
-    sale_timestamp DATETIME NOT NULL, -- วันและเวลาที่กดน้ำแบบเป๊ะๆ
+    sale_timestamp DATETIME NOT NULL, -- วันและเวลาที่กดน้ำ
     quantity INT NOT NULL,
     FOREIGN KEY (machine_id) REFERENCES Dim_Vending_Machines(machine_id),
     FOREIGN KEY (product_id) REFERENCES Dim_Products(product_id),
@@ -61,10 +61,10 @@ INSERT INTO Dim_Toppings (topping_id, topping_name, extra_price) VALUES
 -- =============================================
 -- 3. เพิ่มข้อมูลตู้กดน้ำจำลอง (Dim_Vending_Machines)
 -- =============================================
--- เปรียบเทียบตู้ M001 (มุมมืด-ยังไม่ติดไฟของคุณแม่) กับ ตู้ M002 (มุมมืด-ติดไฟแล้ว)
+-- เปรียบเทียบตู้ M001 (มุมมืด-ยังไม่ติดไฟ) กับ ตู้ M002 (มุมมืด-ติดไฟแล้ว)
 INSERT INTO Dim_Vending_Machines (machine_id, location_zone, is_low_light, has_led_strip) VALUES
 ('M001', 'ทางเชื่อมอาคารเก่า (มุมมืด)', TRUE, FALSE), -- ตู้มืดสนิท
-('M002', 'หน้าแผนกผู้ป่วยนอก (มุมมืด-ทดลองติดไฟ)', TRUE, TRUE), -- ตู้ที่คุณแม่ให้ติดไฟ LED
+('M002', 'หน้าแผนกผู้ป่วยนอก (มุมมืด-ทดลองติดไฟ)', TRUE, TRUE), -- ตู้ที่ติดไฟ LED
 ('M003', 'โถงกลางอาคาร 1 (สว่างปกติ)', FALSE, FALSE);
 
 -- =============================================
@@ -76,7 +76,7 @@ INSERT INTO Fact_Sales (machine_id, product_id, topping_id, sale_timestamp, quan
 ('M001', 'P001', 'T03', '2026-05-23 01:15:00', 1),
 ('M001', 'P002', 'T01', '2026-05-23 03:40:00', 1),
 
--- ช่วงดึก ตู้ M002 (มุมมืดแต่ติดไฟ LED ของคุณแม่) คนเดินมาเห็นชัด กดรัวๆ โดยเฉพาะเมนูกาแฟดีดๆ!
+-- ช่วงดึก ตู้ M002 (มุมมืดแต่ติดไฟ LED ) คนเดินมาเห็นชัด กดรัวๆ โดยเฉพาะเมนูกาแฟ
 ('M002', 'P001', 'T01', '2026-05-23 00:30:00', 1), -- กาแฟเบิ้ลช็อต
 ('M002', 'P001', 'T03', '2026-05-23 01:45:00', 2),
 ('M002', 'P002', 'T03', '2026-05-23 02:20:00', 1),
