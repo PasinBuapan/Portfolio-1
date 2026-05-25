@@ -11,12 +11,10 @@ SELECT
     CASE WHEN m.has_led_strip = TRUE THEN 'ติดไฟ LED' ELSE 'ไม่มีไฟ LED' END AS 'สถานะ LED',
     COUNT(DISTINCT m.machine_id) AS 'จำนวนตู้',
     SUM(s.quantity) AS 'จำนวนแก้วที่ขายได้',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขายรวม (บาท)',
+    SUM(s.total_price) AS 'ยอดขายรวม (บาท)',
     ROUND(AVG(s.quantity), 2) AS 'เฉลี่ยแก้วต่อครั้ง'
 FROM Fact_Sales s
 JOIN Dim_Vending_Machines m ON s.machine_id = m.machine_id
-JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 WHERE m.is_low_light = TRUE
 GROUP BY m.has_led_strip
 
@@ -26,12 +24,10 @@ SELECT
     'รวมทั้งหมด (มุมมืด)' AS 'สถานะ LED',
     COUNT(DISTINCT m.machine_id) AS 'จำนวนตู้',
     SUM(s.quantity) AS 'จำนวนแก้วที่ขายได้',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขายรวม (บาท)',
+    SUM(s.total_price) AS 'ยอดขายรวม (บาท)',
     ROUND(AVG(s.quantity), 2) AS 'เฉลี่ยแก้วต่อครั้ง'
 FROM Fact_Sales s
 JOIN Dim_Vending_Machines m ON s.machine_id = m.machine_id
-JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 WHERE m.is_low_light = TRUE;
 
 -- =============================================
@@ -42,14 +38,13 @@ SELECT
     p.category AS 'ประเภทเครื่องดื่ม',
     SUM(s.quantity) AS 'จำนวนแก้วที่ขายได้ในช่วงดึก',
     COUNT(s.transaction_id) AS 'จำนวนธุรกรรม',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขายช่วงดึก (บาท)',
-    ROUND(SUM(s.quantity * (p.price + t.extra_price)) / COUNT(s.transaction_id), 2) AS 'ค่าเฉลี่ยต่อธุรกรรม (บาท)'
+    SUM(s.total_price) AS 'ยอดขายช่วงดึก (บาท)',
+    ROUND(AVG(s.total_price), 2) AS 'ค่าเฉลี่ยต่อธุรกรรม (บาท)'
 FROM Fact_Sales s
 JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 WHERE HOUR(s.sale_timestamp) >= 23 OR HOUR(s.sale_timestamp) < 5
 GROUP BY p.category
-ORDER BY SUM(s.quantity * (p.price + t.extra_price)) DESC;
+ORDER BY ยอดขายช่วงดึก (บาท) DESC;
 
 -- =============================================
 -- 3. ยอดขายตามสถานที่ตั้งตู้ (Location Analysis)
@@ -62,14 +57,12 @@ SELECT
     CASE WHEN m.has_led_strip = TRUE THEN 'มี' ELSE 'ไม่มี' END AS 'ไฟ LED',
     COUNT(DISTINCT s.transaction_id) AS 'จำนวนธุรกรรม',
     SUM(s.quantity) AS 'จำนวนแก้วทั้งหมด',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขายรวม (บาท)',
-    ROUND(SUM(s.quantity * (p.price + t.extra_price)) / COUNT(DISTINCT s.transaction_id), 2) AS 'เฉลี่ยต่อธุรกรรม (บาท)'
+    SUM(s.total_price) AS 'ยอดขายรวม (บาท)',
+    ROUND(AVG(s.total_price), 2) AS 'เฉลี่ยต่อธุรกรรม (บาท)'
 FROM Fact_Sales s
 JOIN Dim_Vending_Machines m ON s.machine_id = m.machine_id
-JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 GROUP BY m.machine_id, m.location_zone, m.is_low_light, m.has_led_strip
-ORDER BY SUM(s.quantity * (p.price + t.extra_price)) DESC;
+ORDER BY ยอดขายรวม (บาท) DESC;
 
 -- =============================================
 -- 4. ความนิยมของสินค้า (Product Performance)
@@ -82,13 +75,12 @@ SELECT
     p.menu_type AS 'ประเภทการบริการ (Hot/Cold)',
     SUM(s.quantity) AS 'จำนวนแก้วขายได้',
     COUNT(DISTINCT s.transaction_id) AS 'จำนวนครั้งที่ขาย',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขายรวม (บาท)',
-    ROUND(SUM(s.quantity * (p.price + t.extra_price)) / SUM(s.quantity), 2) AS 'ราคาเฉลี่ยต่อแก้ว (บาท)'
+    SUM(s.total_price) AS 'ยอดขายรวม (บาท)',
+    ROUND(SUM(s.total_price) / SUM(s.quantity), 2) AS 'ราคาเฉลี่ยต่อแก้ว (บาท)'
 FROM Fact_Sales s
 JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 GROUP BY p.product_id, p.product_name, p.category, p.menu_type
-ORDER BY SUM(s.quantity * (p.price + t.extra_price)) DESC;
+ORDER BY ยอดขายรวม (บาท) DESC;
 
 -- =============================================
 -- 5. ความนิยมของท็อปปิ้ง (Topping Analysis)
@@ -99,12 +91,12 @@ SELECT
     t.topping_name AS 'ชื่อท็อปปิ้ง',
     COUNT(s.transaction_id) AS 'จำนวนครั้งที่สั่ง',
     SUM(s.quantity) AS 'จำนวนแก้ว',
-    SUM(t.extra_price * s.quantity) AS 'ยอดขายท็อปปิ้ง (บาท)',
+    SUM(s.topping_price * s.quantity) AS 'ยอดขายท็อปปิ้ง (บาท)',
     ROUND(COUNT(s.transaction_id) / (SELECT COUNT(*) FROM Fact_Sales) * 100, 2) AS 'สัดส่วนผู้สั่ง (%)'
 FROM Fact_Sales s
 JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 GROUP BY t.topping_id, t.topping_name
-ORDER BY COUNT(s.transaction_id) DESC;
+ORDER BY จำนวนครั้งที่สั่ง DESC;
 
 -- =============================================
 -- 6. วิเคราะห์แบบ Hourly Distribution ของการขาย
@@ -114,7 +106,7 @@ SELECT
     HOUR(s.sale_timestamp) AS 'ชั่วโมง',
     COUNT(s.transaction_id) AS 'จำนวนธุรกรรม',
     SUM(s.quantity) AS 'จำนวนแก้ว',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขาย (บาท)',
+    SUM(s.total_price) AS 'ยอดขาย (บาท)',
     CASE 
         WHEN HOUR(s.sale_timestamp) >= 23 OR HOUR(s.sale_timestamp) < 5 THEN 'กลางคืน (23:00-05:00)'
         WHEN HOUR(s.sale_timestamp) >= 5 AND HOUR(s.sale_timestamp) < 12 THEN 'เช้า (05:00-12:00)'
@@ -122,13 +114,11 @@ SELECT
         ELSE 'เย็น (17:00-23:00)'
     END AS 'ช่วงเวลา'
 FROM Fact_Sales s
-JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 GROUP BY HOUR(s.sale_timestamp)
 ORDER BY HOUR(s.sale_timestamp);
 
 -- =============================================
--- 7. สรุปยอดขายทั้งหมด (Summary Statistics)
+-- 7. Сรุปยอดขายทั้งหมด (Summary Statistics)
 -- Purpose: ดูภาพรวมของการขายทั้งหมด
 -- =============================================
 SELECT 
@@ -136,14 +126,12 @@ SELECT
     COUNT(DISTINCT s.machine_id) AS 'จำนวนตู้ที่ใช้งาน',
     COUNT(DISTINCT s.product_id) AS 'จำนวนประเภทสินค้า',
     SUM(s.quantity) AS 'จำนวนแก้วขายได้ทั้งหมด',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขายรวม (บาท)',
-    ROUND(AVG(s.quantity * (p.price + t.extra_price)), 2) AS 'ค่าเฉลี่ยต่อธุรกรรม (บาท)',
-    ROUND(SUM(s.quantity * (p.price + t.extra_price)) / COUNT(DISTINCT s.machine_id), 2) AS 'เฉลี่ยต่อตู้ (บาท)',
+    SUM(s.total_price) AS 'ยอดขายรวม (บาท)',
+    ROUND(AVG(s.total_price), 2) AS 'ค่าเฉลี่ยต่อธุรกรรม (บาท)',
+    ROUND(SUM(s.total_price) / COUNT(DISTINCT s.machine_id), 2) AS 'เฉลี่ยต่อตู้ (บาท)',
     MIN(s.sale_timestamp) AS 'วันที่เริ่มต้น',
     MAX(s.sale_timestamp) AS 'วันที่สิ้นสุด'
-FROM Fact_Sales s
-JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id;
+FROM Fact_Sales s;
 
 -- =============================================
 -- 8. วิเคราะห์ Cross-Analysis: LED ต่อ Location
@@ -154,12 +142,10 @@ SELECT
     CASE WHEN m.has_led_strip = TRUE THEN 'ติดไฟ LED' ELSE 'ไม่มีไฟ LED' END AS 'สถานะ LED',
     COUNT(DISTINCT m.machine_id) AS 'จำนวนตู้',
     SUM(s.quantity) AS 'จำนวนแก้ว',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขาย (บาท)',
-    ROUND(SUM(s.quantity * (p.price + t.extra_price)) / COUNT(DISTINCT m.machine_id), 2) AS 'เฉลี่ยต่อตู้ (บาท)'
+    SUM(s.total_price) AS 'ยอดขาย (บาท)',
+    ROUND(SUM(s.total_price) / COUNT(DISTINCT m.machine_id), 2) AS 'เฉลี่ยต่อตู้ (บาท)'
 FROM Fact_Sales s
 JOIN Dim_Vending_Machines m ON s.machine_id = m.machine_id
-JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 GROUP BY m.location_zone, m.has_led_strip
 ORDER BY m.location_zone, m.has_led_strip;
 
@@ -171,11 +157,9 @@ SELECT
     s.status AS 'สถานะ',
     COUNT(s.transaction_id) AS 'จำนวนธุรกรรม',
     SUM(s.quantity) AS 'จำนวนแก้ว',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขาย (บาท)',
+    SUM(s.total_price) AS 'ยอดขาย (บาท)',
     ROUND(COUNT(s.transaction_id) / (SELECT COUNT(*) FROM Fact_Sales) * 100, 2) AS 'สัดส่วน (%)'
 FROM Fact_Sales s
-JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 GROUP BY s.status;
 
 -- =============================================
@@ -187,11 +171,10 @@ SELECT
     m.location_zone AS 'สถานที่',
     p.product_name AS 'สินค้า',
     SUM(s.quantity) AS 'จำนวนแก้ว',
-    SUM(s.quantity * (p.price + t.extra_price)) AS 'ยอดขาย (บาท)',
+    SUM(s.total_price) AS 'ยอดขาย (บาท)',
     COUNT(s.transaction_id) AS 'จำนวนครั้งที่ขาย'
 FROM Fact_Sales s
 JOIN Dim_Vending_Machines m ON s.machine_id = m.machine_id
 JOIN Dim_Products p ON s.product_id = p.product_id
-JOIN Dim_Toppings t ON s.topping_id = t.topping_id
 GROUP BY m.machine_id, m.location_zone, p.product_name
-ORDER BY m.machine_id, SUM(s.quantity * (p.price + t.extra_price)) DESC;
+ORDER BY m.machine_id, ยอดขาย (บาท) DESC;
