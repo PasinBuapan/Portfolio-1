@@ -25,3 +25,10 @@ By querying sales performance between a completely dark machine (`M001`) and an 
 
 ### 2. Late-Night Category Demand
 Time-series filtering confirmed that between **23:00 and 05:00**, the `Caffeine` category outperforms all other beverages by a wide margin, justifying a permanent slot reallocation for these high-margin items.
+
+---
+
+Recommended action
+
+We should provide light to the machine that is in a dark area so the machines are more visible and people can see the product better and feel safer when they choose products, also in case of machine that have caffeine perform better than other beverages in all time we can consider reallocate material for caffeine product more.
+
