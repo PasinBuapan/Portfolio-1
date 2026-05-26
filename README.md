@@ -1,7 +1,7 @@
 # 🥤 Vending Machine Optimization: Low-Light & High-Traffic Zone Analysis
 
 ## 📌 Business Overview
-This project focuses on optimizing vending machine operations within a hospital environment, specifically targeting machines located in **low-light/walkway areas** during late-night shifts (**23:00 - 05:00**). 
+This project focuses on optimizing vending machine operations within a hospital environment, specifically targeting machines located in **low-light/walkway areas** during late-night shifts (**23:00 - 05:00**). Targeting late-night hospital shifts, primarily medical staff and shift workers who require high caffeine intake to sustain alert operations.
 
 The goal is to evaluate two main hypotheses to maximize sales revenue and operational efficiency:
 1. **Visibility Impact (The "Light" Hypothesis):** Installing LED strips on dark-zone machines to boost impulse buying and improve the customer experience.
